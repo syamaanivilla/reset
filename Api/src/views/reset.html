@@ -1,0 +1,95 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, intial-scale=1" />
+    <link rel="stylesheet" href="./stylesindexex.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8"
+      crossorigin="anonymous"
+    ></script>
+
+    <div class="main-container">
+      <div class="dark-container">
+        <img class="image-1" src="images/img1.png" />
+      </div>
+      <div class="light-container">
+        <img class="image-2" src="images/img2.png" />
+      </div>
+    </div>
+
+    <div class="card-container">
+      <div class="login-card">
+        <!--Row - 1-->
+        <div class="row-1">
+          <div>
+            <p class="row-1-text-1">Welcome to Proclink!</p>
+          </div>
+        </div>
+        <p class="row-2">reset password!</p>
+        <p id="error_id"></p>
+        <div class="input-row">
+          <label class="input-row-label">Enter your password </label><br />
+          <input
+            id="password_id"
+            placeholder="user password"
+            class="input-row-input"
+          />
+        </div>
+        <div class="input-row">
+          <label class="input-row-label">enter confirm password </label><br />
+          <input
+            id="password2_id"
+            placeholder="user confirm password"
+            class="input-row-input"
+          />
+        </div>
+        <button onclick="onLoginClick()" class="login-button">Submit</button>
+      </div>
+    </div>
+
+    <script>
+      const onLoginClick = async (req, res) => {
+        const passElement = document.getElementById("password_id");
+        const pass2Element = document.getElementById("password2_id");
+        var obj = {
+          password: passElement.value,
+          password2: pass2Element.value,
+        };
+        console.log(obj);
+        var url = "http://localhost:4003/api/reset-password/:_id/:token";
+        var response = await fetch(url, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(obj),
+        });
+        response = await response.json();
+
+        var error = document.getElementById("error_id");
+        if (response.status === false) {
+          error.innerText = response.msg;
+          error.style.color = "red";
+        } else {
+          error.innerText = "";
+          localStorage.setItem("token", response.token);
+          localStorage.setItem("userData", JSON.stringify(response.data));
+          window.location.href = "cropper.html";
+        }
+      };
+    </script>
+  </body>
+</html>

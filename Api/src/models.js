@@ -7,8 +7,9 @@ const userSchema = mongoose.Schema({
   name: String,
   username: String,
   password: String,
-  // enc_password: String,
+  enc_password: String,
   uniqueId: String,
+  gender: String,
 });
 
 const Users = dbConnect.model("Users", userSchema);

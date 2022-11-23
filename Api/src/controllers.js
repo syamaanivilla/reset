@@ -3,8 +3,9 @@ const CryptoJS = require("crypto-js");
 const dbConnect = require("./utils/db");
 const { response } = require("express");
 const Users = require("./models");
-var jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 var privateKey = "Syamaanivilla";
+const ejs = require("ejs");
 
 const registerNewUser = (req, res) => {
   var data = req.body;
@@ -32,7 +33,7 @@ const getAllUsers = (req, res) => {
 const getOneUser = (req, res) => {
   var userId = req.query._id;
   Users.findById(userId).then((response) => {
-    response.uniqueId = undefined;
+    //response.uniqueId = undefined;
     return res.json(response);
   });
 
@@ -42,6 +43,25 @@ const getOneUser = (req, res) => {
 
   // console.log(userId);
   // return res.json("Data");
+};
+const updateOneUser = async (req, res) => {
+  var userId = req.query._id;
+
+  var data = req.body;
+
+  var user = await Users.findOne({ username: data.username });
+
+  if (user === null) {
+    return res.json({
+      status: false,
+
+      msg: "Please enter registered email address",
+    });
+  }
+
+  Users.findByIdAndUpdate(user, data).then((response) => {
+    return res.json({ status: "updated", user: response });
+  });
 };
 
 const deleteOneUser = (req, res) => {
@@ -54,8 +74,7 @@ const deleteOneUser = (req, res) => {
 };
 const loginUser = async (req, res) => {
   var data = req.body;
-  //console.log(data);
-  var user = await Users.findOne({ username: data.username });
+  var user = await Users.findOne({ email: data.email });
 
   if (user === null) {
     return res.json({ status: false, msg: "You entered wrong Username" });
@@ -69,10 +88,10 @@ const loginUser = async (req, res) => {
     return res.json({ status: false, msg: "You entered wrong Password" });
   }
 
-  var token = jwt.sign({ username: user.username, _id: user._id }, privateKey);
+  var token = jwt.sign({ email: user.email, _id: user._id }, privateKey);
 
-  user.uniqueId = undefined;
-  user.password = undefined;
+  // user.uniqueId = undefined;
+  // user.password = undefined;
 
   return res.json({ status: true, data: user, token: token });
 };
@@ -82,13 +101,76 @@ const isAuthenticated = async (req, res) => {
   var user = jwt.verify(userToken, privateKey);
   if (user) {
     user = await Users.findById(user._id);
-    user.password = undefined;
-    user.uniqueId = undefined;
+    // user.password = undefined;
+    // user.uniqueId = undefined;
     return res.json({ status: true, data: user });
   } else {
     return res.json({ status: false });
   }
 };
+const forget = async (req, res) => {
+  res.render("forget-password");
+};
+const forgetPassword = async (req, res) => {
+  var data = req.body;
+
+  var user = await Users.findOne({
+    email: data.email,
+  });
+
+  if (user === null) {
+    return res.json({ status: false, msg: "You entered wrong Username" });
+  }
+  const link = `http://localhost:4003/api/reset-password/${user.email}/${user.uniqueId}`;
+
+  console.log(link);
+};
+const reset = (req, res) => {
+  res.render("reset-password");
+};
+//   const { id, token } = req.params;
+//   if (id !== Users._id) {
+//     res.send("inavlid id");
+//   }
+//   try {
+//     // var user = jwt.verify(token, privateKey);
+//     res.render("reset-password", { email: user.email });
+//   } catch (error) {
+//     console.log(error.message);
+//     res.send(error.message);
+//   }
+// };
+const resetpassword = async (req, res) => {
+  var userId = req.query.uniqueId;
+  var data = req.body;
+  var password = req.body;
+  var password2 = req.body;
+  if (password === password2) {
+    Users.updateMany(userId, data).then((response) => {
+      res.send(response);
+    });
+  } else {
+    return res.json({ status: false, msg: "Your password doesnt match" });
+  }
+};
+
+//   const { id, token } = req.params;
+//   const { password, password2 } = req.body;
+//   if (id !== Users._id) {
+//     res.send("invalid id");
+//     return;
+//   }
+//   try {
+//     //var user = jwt.verify(token, privateKey);
+//     if (password === password2) {
+//       res.send("valid password");
+//       return res.json(user);
+//     }
+//     res.send("password not matched");
+//     return res.json(user);
+//   } catch (error) {
+//     console.log(error.message);
+//     res.send(error.message);
 module.exports = {
   registerNewUser,
   isAuthenticated,
@@ -96,6 +178,13 @@ module.exports = {
   getAllUsers,
   getOneUser,
   deleteOneUser,
+  forget,
+  reset,
+  resetpassword,
+
+  updateOneUser,
+  forgetPassword,
+
   // updateOneUser,
 };
 // console.log(req.body);
